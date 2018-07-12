@@ -50,6 +50,13 @@ class CliApp:
             if user_input == CliApp.ACTION_EXIT:
                 self.exit()
 
+            print("Do you want to continue?[y/n]")
+            user_input = input().strip()
+            if user_input == 'y':
+                print(self._actions_msg)
+            else:
+                self.exit()
+
     def add_user(self):
         first_name = input("Type in first name: ").strip()
         last_name = input("Type in last name: ").strip()
@@ -66,10 +73,36 @@ class CliApp:
             json.dump(self._data_list, json_file, indent=2)
 
     def edit_user(self):
-        pass
+        email = input("Type in email of user you want to edit: ").strip()
+        for user in self._data_list:
+            if user['email'] == email:
+                first_name = input("Type in first name: ").strip()
+                last_name = input("Type in last name: ").strip()
+                phone_number1 = input("Type in main phone number: ").strip()
+                phone_number2 = input("Type in additional phone number: ").strip()
+                comments = input("Type in any comments: ").strip()
+
+                user['firstName'] = first_name
+                user['lastName'] = last_name
+                user['mainPhoneNumber'] = phone_number1
+                user['additionalPhoneNumber'] = phone_number2
+                user['comments'] = comments
+
+        print('The chosen user was updated successfully')
+
+        with open("data.json", "w") as json_file:
+            json.dump(self._data_list, json_file, indent=2)
 
     def delete_user(self):
-        pass
+        email = input("Type in email of user you want to delete: ").strip()
+        for user in self._data_list:
+            if user['email'] == email:
+                self._data_list.remove(user)
+
+        print("The chosen user was deleted successfully")
+
+        with open("data.json", "w") as json_file:
+            json.dump(self._data_list, json_file, indent=2)
 
     def exit(self):
         print(CliApp.MESSAGE_EXIT)
