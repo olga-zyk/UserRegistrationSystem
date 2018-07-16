@@ -1,4 +1,7 @@
 import json
+import re
+
+__module__ = 'cli'
 
 
 class CliApp:
@@ -34,35 +37,58 @@ class CliApp:
 
         while self._running:
             print(self._actions_msg)
-            user_input = input().strip()
+            user_input: str = input().strip()
 
             if user_input == CliApp.ACTION_ADD:
                 self.add_user()
 
-            if user_input == CliApp.ACTION_EDIT:
+            elif user_input == CliApp.ACTION_EDIT:
                 self.edit_user()
-                pass
 
-            if user_input == CliApp.ACTION_DELETE:
+            elif user_input == CliApp.ACTION_DELETE:
                 self.delete_user()
-                pass
 
-            if user_input == CliApp.ACTION_EXIT:
+            elif user_input == CliApp.ACTION_EXIT:
                 self.exit()
 
-            print("Do you want to continue?[y/n]")
-            user_input = input().strip()
-            if user_input == 'y':
-                print(self._actions_msg)
+            if user_input == (CliApp.ACTION_ADD or CliApp.ACTION_EDIT or CliApp.ACTION_DELETE):
+                self.ask_continue()
+
+    def ask_continue(self):
+        print("Do you want to continue?[Y/n]")
+        user_input = input().strip()
+        if user_input == 'n':
+            self.exit()
+
+    @staticmethod
+    def email_validation(message):
+        while True:
+            try:
+                regex = re.compile(r'(?P<email>[a-z\d][a-z\d._+]*@(?P<domain>(?:[a-z\d](?:-?[a-z\d]+)+\.)+[a-z]{2,}))')
+                email = input(message).strip()
+                match = re.fullmatch(regex, email)
+                if not match:
+                    print('Entered email format is invalid. Please enter valid email')
+                else:
+                    return match.group('email')
+            except ValueError:
+                break
+
+    def number_validation(self, message):
+        while True:
+            try:
+                phone_number = int(input(message).strip())
+            except ValueError:
+                print('The entered number is incorrect. Please enter valid phone number.')
             else:
-                self.exit()
+                return phone_number
 
     def add_user(self):
         first_name = input("Type in first name: ").strip()
         last_name = input("Type in last name: ").strip()
-        email = input("Type in email: ").strip()
-        phone_number1 = input("Type in main phone number: ").strip()
-        phone_number2 = input("Type in additional phone number: ").strip()
+        email = self.email_validation("Type in email: ")
+        phone_number1 = self.number_validation("Type in main phone number: ")
+        phone_number2 = self.number_validation("Type in additional phone number: ")
         comments = input("Type in any comments: ").strip()
 
         keys = ["firstName", "lastName", "email", "mainPhoneNumber", "additionalPhoneNumber", "comments"]
@@ -78,8 +104,8 @@ class CliApp:
             if user['email'] == email:
                 first_name = input("Type in first name: ").strip()
                 last_name = input("Type in last name: ").strip()
-                phone_number1 = input("Type in main phone number: ").strip()
-                phone_number2 = input("Type in additional phone number: ").strip()
+                phone_number1 = self.number_validation("Type in main phone number: ")
+                phone_number2 = self.number_validation("Type in additional phone number: ")
                 comments = input("Type in any comments: ").strip()
 
                 user['firstName'] = first_name
@@ -88,21 +114,29 @@ class CliApp:
                 user['additionalPhoneNumber'] = phone_number2
                 user['comments'] = comments
 
-        print('The chosen user was updated successfully')
+                print('The chosen user was updated successfully')
 
-        with open("data.json", "w") as json_file:
-            json.dump(self._data_list, json_file, indent=2)
+                with open("data.json", "w") as json_file:
+                    json.dump(self._data_list, json_file, indent=2)
+
+                break
+        else:
+            print("No user was found")
 
     def delete_user(self):
         email = input("Type in email of user you want to delete: ").strip()
+
         for user in self._data_list:
             if user['email'] == email:
                 self._data_list.remove(user)
+                print("The chosen user was deleted successfully")
 
-        print("The chosen user was deleted successfully")
+                with open("data.json", "w") as json_file:
+                    json.dump(self._data_list, json_file, indent=2)
 
-        with open("data.json", "w") as json_file:
-            json.dump(self._data_list, json_file, indent=2)
+                break
+        else:
+            print("No user was found")
 
     def exit(self):
         print(CliApp.MESSAGE_EXIT)
