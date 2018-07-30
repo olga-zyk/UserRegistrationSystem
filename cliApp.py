@@ -21,7 +21,7 @@ class CliApp:
         self._data_file = config.get('data_file')
 
         try:
-            with open(self._data_file, 'rt') as json_file:
+            with open(self._data_file, 'r+') as json_file:
                 self._data_list = json.load(json_file)
         except FileNotFoundError as error:
             print('Error loading data file "{0}": {1}'.format(config.get('data_file'), error.strerror))
@@ -51,7 +51,7 @@ class CliApp:
             elif user_input == CliApp.ACTION_EXIT:
                 self.exit()
 
-            if user_input == (CliApp.ACTION_ADD or CliApp.ACTION_EDIT or CliApp.ACTION_DELETE):
+            if user_input == CliApp.ACTION_ADD or CliApp.ACTION_EDIT or CliApp.ACTION_DELETE:
                 self.ask_continue()
 
     def ask_continue(self):
@@ -74,7 +74,8 @@ class CliApp:
             except ValueError:
                 break
 
-    def number_validation(self, message):
+    @staticmethod
+    def number_validation(message):
         while True:
             try:
                 phone_number = int(input(message).strip())
@@ -83,9 +84,18 @@ class CliApp:
             else:
                 return phone_number
 
+    @staticmethod
+    def is_blank(message):
+        while True:
+            field = input(message).strip()
+            if field == '':
+                print("This field cannot be blank.")
+            else:
+                return field
+
     def add_user(self):
-        first_name = input("Type in first name: ").strip()
-        last_name = input("Type in last name: ").strip()
+        first_name = self.is_blank("Type in first name: ")
+        last_name = self.is_blank("Type in last name: ")
         email = self.email_validation("Type in email: ")
         phone_number1 = self.number_validation("Type in main phone number: ")
         phone_number2 = self.number_validation("Type in additional phone number: ")
@@ -95,7 +105,9 @@ class CliApp:
         values = [first_name, last_name, email, phone_number1, phone_number2, comments]
         self._data_list.append(dict(zip(keys, values)))
 
-        with open("data.json", "w") as json_file:
+        print("The user was successfully registered.")
+
+        with open("data.json", "w+") as json_file:
             json.dump(self._data_list, json_file, indent=2)
 
     def edit_user(self):
@@ -103,10 +115,20 @@ class CliApp:
         for user in self._data_list:
             if user['email'] == email:
                 first_name = input("Type in first name: ").strip()
+                if first_name == '':
+                    first_name = user['firstName']
                 last_name = input("Type in last name: ").strip()
+                if last_name == '':
+                    last_name = user['lastName']
                 phone_number1 = self.number_validation("Type in main phone number: ")
+                # if phone_number1 == '':
+                #     phone_number1 = user['mainPhoneNumber']
                 phone_number2 = self.number_validation("Type in additional phone number: ")
+                # if phone_number2 == '':
+                #     phone_number2 = user['additionalPhoneNumber']
                 comments = input("Type in any comments: ").strip()
+                if comments == '':
+                    comments = user['comments']
 
                 user['firstName'] = first_name
                 user['lastName'] = last_name
@@ -114,7 +136,7 @@ class CliApp:
                 user['additionalPhoneNumber'] = phone_number2
                 user['comments'] = comments
 
-                print('The chosen user was updated successfully')
+                print('The chosen user was updated successfully.')
 
                 with open("data.json", "w") as json_file:
                     json.dump(self._data_list, json_file, indent=2)
